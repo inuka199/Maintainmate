@@ -1,8 +1,6 @@
 
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
@@ -16,12 +14,6 @@ class SettingsScreen extends StatelessWidget {
     try {
       final provider = Provider.of<ServiceProvider>(context, listen: false);
       final records = provider.records;
-      final List<Map<String, dynamic>> data = records.map((r) => r.toMap()).toList();
-      // Only keep serializable fields (remove timestamps if not converted to string, 
-      // but toMap uses Timestamp objects which aren't directly json encodeable to string standardly without custom encoder usually,
-      // actually Timestamp is internal to firebase, we need distinct export format or valid json).
-      // Let's modify export to use standard ISO strings for dates.
-      
       final exportList = records.map((r) {
         var map = r.toMap();
         // Convert Timestamps to ISO Strings for JSON
@@ -33,11 +25,13 @@ class SettingsScreen extends StatelessWidget {
 
       final jsonString = jsonEncode(exportList);
       
-      final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/service_records_export.json');
-      await file.writeAsString(jsonString);
+      final xFile = XFile.fromData(
+        utf8.encode(jsonString),
+        mimeType: 'application/json',
+        name: 'service_records_export.json',
+      );
       
-      await Share.shareXFiles([XFile(file.path)], text: 'Service App Backup');
+      await Share.shareXFiles([xFile], text: 'Service App Backup');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export failed: $e')));
     }
@@ -48,8 +42,19 @@ class SettingsScreen extends StatelessWidget {
       FilePickerResult? result = await FilePicker.platform.pickFiles();
 
       if (result != null) {
-        File file = File(result.files.single.path!);
-        String content = await file.readAsString();
+        final pickedFile = result.files.single;
+        String content;
+        
+        if (pickedFile.path != null) {
+          // Mobile/Desktop with path
+          content = await XFile(pickedFile.path!).readAsString();
+        } else if (pickedFile.bytes != null) {
+          // Web or bytes provided
+          content = utf8.decode(pickedFile.bytes!);
+        } else {
+          throw Exception('Cannot read file content');
+        }
+
         List<dynamic> jsonList = jsonDecode(content);
         
         final provider = Provider.of<ServiceProvider>(context, listen: false);
