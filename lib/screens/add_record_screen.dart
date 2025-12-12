@@ -60,7 +60,11 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
     }
   }
 
+  bool _isSaving = false;
+
   void _submit() async {
+    if (_isSaving) return;
+
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       final itemName = _itemController.text;
@@ -71,21 +75,50 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
         return;
       }
 
-      final record = ServiceRecord(
-        id: _uuid.v4(),
-        itemName: itemName,
-        type: _typeController.text,
-        date: _selectedDate,
-        cost: double.tryParse(_costController.text) ?? 0.0,
-        notes: _notesController.text,
+      setState(() {
+        _isSaving = true;
+      });
 
-        nextDate: _nextDate,
-      );
+      try {
+        // Create the record
+        final record = ServiceRecord(
+          id: _uuid.v4(),
+          itemName: itemName,
+          type: _typeController.text,
+          date: _selectedDate,
+          cost: double.tryParse(_costController.text) ?? 0.0,
+          notes: _notesController.text,
+          nextDate: _nextDate,
+        );
 
-      await Provider.of<ServiceProvider>(context, listen: false).addRecord(record);
-      
-      if (mounted) {
-        Navigator.pop(context);
+        // Attempt to save with a timeout
+        // valid for offline support where firestore might take time to confirm with server
+        await Provider.of<ServiceProvider>(context, listen: false)
+            .addRecord(record)
+            .timeout(const Duration(seconds: 5), onTimeout: () {
+              // If it times out, we assume it's queued for offline sync
+              return;
+            });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Record saved successfully!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error saving record: $e')),
+          );
+          setState(() {
+            _isSaving = false;
+          });
+        }
       }
     }
   }
@@ -197,11 +230,17 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
                 const SizedBox(height: 32),
                 
                 ElevatedButton(
-                  onPressed: _submit,
+                  onPressed: _isSaving ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('Save Record', style: TextStyle(fontSize: 18)),
+                  child: _isSaving
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Save Record', style: TextStyle(fontSize: 18)),
                 ),
               ],
             ),
