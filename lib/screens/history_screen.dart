@@ -148,7 +148,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ],
         ),
         trailing: Text(
-          '\$${record.cost.toStringAsFixed(2)}',
+          'Rs ${record.cost.toStringAsFixed(2)}',
           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
         ),
         onTap: () {

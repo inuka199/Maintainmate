@@ -46,7 +46,12 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
           textTheme: GoogleFonts.poppinsTextTheme(), // Modern clear font
-          scaffoldBackgroundColor: Colors.grey[100],
+          scaffoldBackgroundColor: const Color(0xFFFEFDF5),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
+            elevation: 0,
+          ),
         ),
         home: const HomeScreen(),
       ),

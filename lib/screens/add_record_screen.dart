@@ -193,7 +193,7 @@ class _AddRecordScreenState extends State<AddRecordScreen> {
                   controller: _costController,
                   decoration: const InputDecoration(
                     labelText: 'Cost',
-                    prefixText: '\$ ',
+                    prefixText: 'Rs ',
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {

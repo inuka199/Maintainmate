@@ -33,7 +33,7 @@ class ReportScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       const Text("Total Expenses", style: TextStyle(color: Colors.white, fontSize: 16)),
-                      Text("\$${totalCost.toStringAsFixed(2)}", style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+                      Text("Rs ${totalCost.toStringAsFixed(2)}", style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -54,7 +54,7 @@ class ReportScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(e.key),
-                          Text("\$${itemTotal.toStringAsFixed(2)}"),
+                          Text("Rs ${itemTotal.toStringAsFixed(2)}"),
                         ],
                       ),
                       const SizedBox(height: 4),
